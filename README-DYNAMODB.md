@@ -32,7 +32,7 @@ The first time you run the application, the database tables will be automaticall
 python -m src.database.init_db
 ```
 
-### 3. Seed Test Data (Optional)
+### 3. Seed Test Data
 
 If you want to populate the database with sample data for development:
 
@@ -86,6 +86,7 @@ DynamoDB Local data is persisted in the `dynamodb-data` directory. This means:
 When deploying to production, set the `ENVIRONMENT` environment variable to `production`. This will make the application connect to AWS DynamoDB instead of the local instance.
 
 You'll need to set up the following environment variables for production:
+
 - `AWS_REGION`: The AWS region where your DynamoDB tables are located
 - AWS credentials (either through environment variables or AWS configuration files)
 

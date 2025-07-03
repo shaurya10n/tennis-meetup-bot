@@ -231,9 +231,9 @@ def main():
     
     # Seed data
     courts = seed_courts(court_dao)
-    seed_players(player_dao, courts)
-    seed_schedules(schedule_dao)
-    
+    '''seed_players(player_dao, courts)
+    seed_schedules(schedule_dao)'''
+
     print("Database seeding complete!")
 
 
