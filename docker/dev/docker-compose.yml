@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    volumes:
+      - "../../dynamodb-data:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+    
+  meetup-bot:
+    build: 
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: meetup-bot-dev
+    volumes:
+      - ../../:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - dynamodb-local

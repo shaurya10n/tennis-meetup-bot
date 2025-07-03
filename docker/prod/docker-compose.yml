@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  meetup-bot:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/meetup-bot:latest
+    container_name: meetup-bot
+    restart: always
+    env_file:
+      - .env.prod
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "${AWS_REGION}"
+        awslogs-group: "/meetup-bot"
+        awslogs-stream: "meetup-bot-container"
