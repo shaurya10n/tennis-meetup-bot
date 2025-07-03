@@ -1,0 +1,39 @@
+{
+    "courts": [
+        {
+            "court_id": "kits-beach",
+            "name": "Kitsilano Beach Tennis Courts",
+            "location": "Kitsilano",
+            "surface_type": "hard",
+            "number_of_courts": 6,
+            "is_indoor": false,
+            "amenities": ["lights", "washroom", "parking"],
+            "google_maps_link": "https://goo.gl/maps/your-kits-beach-link",
+            "description": "Public courts with beautiful beach view"
+        },
+        {
+            "court_id": "qe-park",
+            "name": "Queen Elizabeth Tennis Courts",
+            "location": "Queen Elizabeth Park",
+            "surface_type": "hard",
+            "number_of_courts": 8,
+            "is_indoor": false,
+            "amenities": ["parking", "washroom", "water"],
+            "google_maps_link": "https://goo.gl/maps/your-qe-park-link",
+            "description": "Public courts in Queen Elizabeth Park"
+        },
+        {
+            "court_id": "ubc-tennis-centre",
+            "name": "UBC Tennis Centre",
+            "location": "UBC",
+            "surface_type": "hard",
+            "number_of_courts": 12,
+            "is_indoor": true,
+            "amenities": ["lights", "washroom", "parking", "pro_shop", "seating"],
+            "google_maps_link": "https://goo.gl/maps/your-ubc-link",
+            "description": "Indoor tennis facility at UBC",
+            "cost_per_hour": 30.0,
+            "booking_url": "https://ubc-tennis-centre-booking-url"
+        }
+    ]
+}

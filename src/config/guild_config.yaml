@@ -1,0 +1,107 @@
+# src/config/guild_config.yaml
+
+roles:
+  # Skill Level Roles with emoji prefixes from constants.py
+  beginner:
+    name: "🌱 Beginner"
+    color: 0x4CAF50    # Green
+    position: 7
+  adv_beginner:
+    name: "🎾 Advanced Beginner"
+    color: 0x8BC34A    # Light Green
+    position: 6
+  intermediate:
+    name: "🎯 Intermediate"
+    color: 0x2196F3    # Blue
+    position: 5
+  adv_intermediate:
+    name: "⭐ Advanced Intermediate"
+    color: 0x9C27B0    # Purple
+    position: 4
+  advanced:
+    name: "🏆 Advanced"
+    color: 0xF44336    # Red
+    position: 3
+  
+  member:
+    name: "Club Member"
+    color: 0x2ecc71    # Green
+    position: 1
+  visitor:
+    name: "Court Visitor"
+    color: 0x95a5a6    # Light gray
+    position: 0        # Lowest position
+
+
+channels:
+  court_side:
+    name: "court-side"
+    category: "General"
+    topic: "Private tennis bot interactions"
+    access_roles: ["Club Member"]  # Only Club Members can see this
+
+  welcome:
+    name: "welcome"
+    category: "Information"
+    topic: "Welcome to the tennis community! Please introduce yourself."
+    access_roles: ["Court Visitor", "Club Member"]  # Both roles can see this
+
+  hotspots:
+    name: "hotspots"
+    category: "Information"
+    topic: "See where the tennis action is happening - real-time player availability dashboard"
+    access_roles: ["Court Visitor", "Club Member"]  # Both roles can see this
+
+  admin:
+    name: "bot-admin"
+    category: "Admin Only"
+    topic: "Admin commands and bot management"
+    access_roles: []  # Empty means admin-only
+
+command_permissions:
+  visitor:
+    commands:
+      - get-started
+    description: "Initial profile setup command"
+
+  member:
+    commands:
+      - view-profile
+      - update-profile
+    description: "Profile management commands"
+
+
+
+messages:
+  welcome:
+    title: "Welcome to {guild_name}, {member_name}! 🎾"
+    description: |
+      We're excited to have you join our tennis community!
+
+      To get started, please use the `/get-started` command to set up your profile and tennis skill rating.
+
+      If you have any questions, feel free to ask in the community channels!
+
+
+responses:
+  errors:
+    wrong_channel: "Please use this command in the {channel} channel."
+    no_permission: "You don't have permission to use this command."
+    command_failed: "Command failed: {error}"
+    setup_failed: "Setup failed: {error}"
+
+  success:
+    setup_complete: "Server setup completed successfully! ✅"
+    permissions_updated: "Bot permissions updated successfully! ✅"
+
+  info:
+    setup_starting: "Starting server setup..."
+    checking_permissions: "Checking bot permissions..."
+
+setup:
+  role_created: "✅ Created '{role}' role"
+  role_exists: "ℹ️ '{role}' role already exists"
+  category_created: "✅ Created '{category}' category"
+  category_exists: "ℹ️ '{category}' category already exists"
+  channel_created: "✅ Created '{channel}' channel"
+  channel_exists: "ℹ️ '{channel}' channel already exists"
