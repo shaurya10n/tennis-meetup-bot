@@ -1,0 +1,14 @@
+setuptools>=69.0.0  # Required for Python 3.13+ compatibility
+nextcord==3.0.1
+firebase-admin==6.7.0
+python-dotenv==1.0.1
+watchdog==6.0.0
+pyyaml==6.0.2
+pytest==7.4.4
+pytest-asyncio==0.23.5
+pytest-mock==3.12.0
+pytest-cov==4.1.0  # For coverage reports
+dateparser==1.2.0  # Natural language date/time parsing
+rapidfuzz==3.6.1  # Fuzzy string matching for typo correction
+python-dateutil==2.8.2  # Enhanced date utilities including rrule for recurrence
+boto3==1.34.0  # AWS SDK for DynamoDB
