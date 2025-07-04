@@ -7,11 +7,15 @@ from .get_started import get_started_command
 from .view_profile import view_profile_command
 from .update_profile import update_profile_command
 from .schedule.command import ScheduleCommands
+from .find_match.command import FindMatchesCommand
+from .matches.command import MatchesCommand
 from .schedule.constants import (
     SCHEDULE_ADD_DESC,
     SCHEDULE_VIEW_DESC,
     SCHEDULE_CLEAR_DESC
 )
+from .find_match.constants import FIND_MATCHES_DESC, FIND_MATCHES_FOR_SCHEDULE_DESC
+from .matches.constants import MATCHES_VIEW_DESC, MATCHES_COMPLETE_DESC
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +32,8 @@ class UserCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.schedule_commands = ScheduleCommands()
+        self.find_matches_command = FindMatchesCommand()
+        self.matches_command = MatchesCommand()
         logger.info("User commands initialized")
 
     @nextcord.slash_command(
@@ -113,6 +119,83 @@ class UserCommands(commands.Cog):
     ):
         """Clear schedule for a period."""
         await self.schedule_commands.clear_schedule(interaction, period)
+
+    @nextcord.slash_command(
+        name="find-matches",
+        description=FIND_MATCHES_DESC,
+        guild_ids=[TEST_GUILD_ID]
+    )
+    async def find_matches(
+        self,
+        interaction: nextcord.Interaction,
+        hours_ahead: int = nextcord.SlashOption(
+            name="hours_ahead",
+            description="Number of hours to look ahead for matches (1-720, default: 168 = 1 week)",
+            required=False,
+            min_value=1,
+            max_value=720
+        )
+    ):
+        """Find potential tennis matches."""
+        await self.find_matches_command.find_matches(interaction, hours_ahead)
+
+    @nextcord.slash_command(
+        name="find-matches-for-schedule",
+        description=FIND_MATCHES_FOR_SCHEDULE_DESC,
+        guild_ids=[TEST_GUILD_ID]
+    )
+    async def find_matches_for_schedule(
+        self,
+        interaction: nextcord.Interaction,
+        schedule_id: str = nextcord.SlashOption(
+            name="schedule_id",
+            description="ID of the schedule to find matches for",
+            required=True
+        )
+    ):
+        """Find matches for a specific schedule."""
+        await self.find_matches_command.find_matches_for_schedule(interaction, schedule_id)
+
+    @nextcord.slash_command(
+        name="matches",
+        description="Manage tennis matches",
+        guild_ids=[TEST_GUILD_ID]
+    )
+    async def matches(self, interaction: nextcord.Interaction):
+        """Matches command group."""
+        pass
+
+    @matches.subcommand(
+        name="view",
+        description=MATCHES_VIEW_DESC
+    )
+    async def matches_view(
+        self,
+        interaction: nextcord.Interaction,
+        match_id: str = nextcord.SlashOption(
+            name="match_id",
+            description="ID of the match to view",
+            required=True
+        )
+    ):
+        """View details of a specific match."""
+        await self.matches_command.view_match(interaction, match_id)
+
+    @matches.subcommand(
+        name="complete",
+        description=MATCHES_COMPLETE_DESC
+    )
+    async def matches_complete(
+        self,
+        interaction: nextcord.Interaction,
+        match_id: str = nextcord.SlashOption(
+            name="match_id",
+            description="ID of the match to complete",
+            required=True
+        )
+    ):
+        """Complete a match and record results."""
+        await self.matches_command.complete_match(interaction, match_id)
 
 def setup(bot):
     bot.add_cog(UserCommands(bot))

@@ -1,5 +1,5 @@
 from src.config.dynamodb_config import get_db
-from src.database.models.dynamodb import Player, Schedule, Court, UserEngagement
+from src.database.models.dynamodb import Player, Schedule, Court, UserEngagement, Match
 
 
 def init_database():
@@ -24,6 +24,10 @@ def init_database():
     if UserEngagement.TABLE_NAME not in existing_tables:
         print(f"Creating {UserEngagement.TABLE_NAME} table...")
         UserEngagement.create_table(dynamodb)
+    
+    if Match.TABLE_NAME not in existing_tables:
+        print(f"Creating {Match.TABLE_NAME} table...")
+        Match.create_table(dynamodb)
     
     print("Database initialization complete!")
 

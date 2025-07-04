@@ -62,95 +62,6 @@ A Discord bot designed to manage a tennis community server, handling new member 
 - Advanced Intermediate (4.0-5.0)
 - Advanced (5.0+)
 
-### Project Structure
-
-```
-├── __init__.py
-├── cogs
-│   ├── __init__.py
-│   ├── admin
-│   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── setup
-│   │   │   ├── __init__.py
-│   │   │   ├── channels.py
-│   │   │   ├── courts.py
-│   │   │   ├── roles.py
-│   ├── user
-│   │   ├── __init__.py
-│   │   ├── commands
-│   │   │   ├── __init__.py
-│   │   │   ├── get_started
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── command.py
-│   │   │   │   ├── constants.py
-│   │   │   │   ├── interests_step.py
-│   │   │   │   ├── location_step.py
-│   │   │   │   ├── ntrp
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── knows_ntrp_step.py
-│   │   │   │   │   ├── questions_step.py
-│   │   │   │   │   ├── rating_confirm_step.py
-│   │   │   │   │   ├── rating_select_step.py
-│   │   │   ├── update_profile
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── command.py
-│   │   │   │   ├── constants.py
-│   │   │   │   ├── views.py
-│   │   │   ├── view_profile
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── command.py
-│   │   │   ├── wrapper.py
-│   │   ├── welcome.py
-├── config
-│   ├── __init__.py
-│   ├── constants.py
-│   ├── dynamodb_config.py
-│   ├── guild_config.yaml
-│   ├── permissions.py
-├── data
-│   ├── courts.json
-├── database
-│   ├── __init__.py
-│   ├── init_db.py
-│   ├── dao
-│   │   ├── __init__.py
-│   │   ├── court_dao.py
-│   │   ├── player_dao.py
-│   │   ├── schedule_dao.py
-│   │   ├── dynamodb
-│   │       ├── __init__.py
-│   │       ├── court_dao.py
-│   │       ├── player_dao.py
-│   │       ├── schedule_dao.py
-│   ├── models
-│   │   ├── __init__.py
-│   │   ├── court.py
-│   │   ├── player.py
-│   │   ├── schedule.py
-│   │   ├── dynamodb
-│   │       ├── __init__.py
-│   │       ├── court.py
-│   │       ├── player.py
-│   │       ├── schedule.py
-├── docker
-│   ├── dev
-│   │   ├── docker-compose.yml
-│   │   ├── .env.dev.template
-│   ├── prod
-│   │   ├── docker-compose.yml
-│   │   ├── .env.prod.template
-├── scripts
-│   ├── deploy.sh
-│   ├── seed_data.py
-├── utils
-│   ├── __init__.py
-│   ├── config_loader.py
-│   ├── court_loader.py
-│   ├── responses.py
-│   ├── role_manager.py
-```
-
 ### Configuration
 
 - Server settings in `guild_config.yaml`
@@ -191,9 +102,15 @@ A Discord bot designed to manage a tennis community server, handling new member 
 - Docker and Docker Compose
   - Download from: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
   - Required for running DynamoDB Local
-- AWS CLI (optional but recommended)
+- AWS CLI
   - Install with: `pip install awscli`
   - Used for interacting with DynamoDB Local directly
+- Virutal Environment
+  - `conda create -n <environment_name> python=<version>`
+  - `conda activate <environment_name>`
+
+### File Setup
+`chmod +x dynamodb-data/shared-local-instance.db`
 
 ### Python Dependencies
 

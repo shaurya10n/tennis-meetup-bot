@@ -119,8 +119,7 @@ class ScheduleListView(nextcord.ui.View):
                     if skill_levels:
                         info_parts.append(f"📊 {', '.join(skill_levels)}")
                     if gender and gender != "none":
-                        gender_emoji = "👨" if gender == "men" else "👩"
-                        info_parts.append(f"{gender_emoji} {gender.capitalize()} Only")
+                        info_parts.append(f"👥 {', '.join(g.capitalize() for g in gender)} Only")
 
                 # Format the line
                 info_str = f" ({' | '.join(info_parts)})" if info_parts else ""
