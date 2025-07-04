@@ -122,6 +122,10 @@ class ScheduleCommands:
             interaction (nextcord.Interaction): Command interaction
             time_description (str): Natural language time description
         """
+        # Add interaction ID logging to track duplicate calls
+        interaction_id = f"{interaction.id}_{interaction.user.id}_{time_description}"
+        logger.info(f"add_schedule called with interaction_id: {interaction_id}")
+        
         # Check profile completion first
         if not await self._check_profile_complete(interaction, EMBEDS["ADD_SCHEDULE"]):
             return
@@ -132,7 +136,7 @@ class ScheduleCommands:
             logger.info(
                 f"Adding schedule - User: {interaction.user.name} ({user_id}), "
                 f"Guild: {interaction.guild.name} ({guild_id}), "
-                f"Time: '{time_description}'"
+                f"Time: '{time_description}', Interaction ID: {interaction_id}"
             )
 
             # Parse time description
@@ -179,16 +183,19 @@ class ScheduleCommands:
                 )
                 return
 
-            # Check for overlaps with other users' schedules
-            overlapping_schedules = self.schedule_dao.get_overlapping_schedules(
+            # Check for overlaps with the user's own schedules first
+            user_overlapping_schedules = self.schedule_dao.get_overlapping_schedules(
                 guild_id,
                 start_timestamp, 
                 end_timestamp,
-                exclude_user_id=user_id
+                exclude_user_id=None  # Don't exclude user to check their own schedules
             )
             
-            if overlapping_schedules:
-                logger.warning(f"Schedule overlaps with {len(overlapping_schedules)} existing schedules")
+            # Filter to only the current user's schedules
+            user_overlapping_schedules = [s for s in user_overlapping_schedules if s.user_id == user_id]
+            
+            if user_overlapping_schedules:
+                logger.warning(f"Schedule overlaps with {len(user_overlapping_schedules)} of user's own schedules")
                 await Responses.send_error(
                     interaction,
                     EMBEDS["ADD_SCHEDULE"],
@@ -197,6 +204,7 @@ class ScheduleCommands:
                 return
 
             # Create and save schedule
+            logger.info(f"Creating schedule - Guild: {guild_id}, User: {user_id}, Start: {start_timestamp}, End: {end_timestamp}, Interaction ID: {interaction_id}")
             schedule = self.schedule_dao.create_schedule(
                 guild_id=guild_id,
                 user_id=user_id,
@@ -206,6 +214,7 @@ class ScheduleCommands:
                 preference_overrides={},
                 status="open"
             )
+            logger.info(f"Created schedule with ID: {schedule.schedule_id}, Interaction ID: {interaction_id}")
             
             if not schedule:
                 logger.error("Failed to save schedule")
@@ -233,6 +242,16 @@ class ScheduleCommands:
                 f"({start_time} - {end_time})"
             )
             
+            # Respond to interaction immediately to prevent timeout
+            await interaction.response.send_message(
+                embed=nextcord.Embed(
+                    title=EMBEDS["ADD_SCHEDULE"],
+                    description=f"✅ Schedule created! Setting up preferences...",
+                    color=nextcord.Color.blue()
+                ),
+                ephemeral=True
+            )
+            
             # Define callback for after preferences are set
             async def after_preferences(updated_schedule: Schedule):
                 # Send final success message
@@ -250,7 +269,7 @@ class ScheduleCommands:
                     ephemeral=True
                 )
 
-            # Show preferences view
+            # Show preferences view using followup
             await show_schedule_preferences(interaction, schedule, after_preferences)
 
         except Exception as e:

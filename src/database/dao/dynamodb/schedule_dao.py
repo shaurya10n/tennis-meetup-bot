@@ -25,6 +25,13 @@ class ScheduleDAO:
         Returns:
             Schedule: The created schedule object
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        import traceback
+        logger.info(f"ScheduleDAO.create_schedule called - Guild: {guild_id}, User: {user_id}, Start: {start_time}, End: {end_time}")
+        logger.info(f"Call stack: {''.join(traceback.format_stack()[-3:])}")
+        
         schedule = Schedule(
             guild_id=guild_id,
             user_id=user_id,
@@ -38,7 +45,10 @@ class ScheduleDAO:
         if not is_valid:
             raise ValueError(f"Invalid schedule: {error_message}")
         
+        logger.info(f"Saving schedule to database - ID: {schedule.schedule_id}")
         self.table.put_item(Item=schedule.to_dict())
+        logger.info(f"Schedule saved successfully - ID: {schedule.schedule_id}")
+        
         return schedule
     
     def get_schedule(self, guild_id: str, schedule_id: str) -> Optional[Schedule]:

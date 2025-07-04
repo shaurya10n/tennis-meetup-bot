@@ -229,8 +229,12 @@ async def show_schedule_preferences(
         preferences = player.preferences or {}
         locations = ", ".join(preferences.get('locations', []))
         skill_levels = ", ".join(level.capitalize() for level in preferences.get('skill_levels', []))
-        gender = preferences.get('gender', 'none')
-        gender_display = gender.capitalize() if gender != "none" else "No Preference"
+        gender = preferences.get('gender', [])
+        if gender:
+            gender_display = ', '.join(g.capitalize() for g in gender)
+        else:
+            gender_display = "No Preference"
+
 
         # Format date and time for display
         # Convert integer timestamps to datetime objects
@@ -258,16 +262,12 @@ async def show_schedule_preferences(
 
         view = SetPreferencesView(schedule, player, callback)
 
-        # Check if initial response has been made
-        if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-        else:
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        # Since we've already responded to the interaction, use followup
+        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
     except Exception as e:
         logger.error(f"Error showing schedule preferences: {e}", exc_info=True)
-        if not interaction.response.is_done():
-            await interaction.response.send_message(
-                "An error occurred. Please try again.",
-                ephemeral=True
-            )
+        await interaction.followup.send(
+            "An error occurred. Please try again.",
+            ephemeral=True
+        )

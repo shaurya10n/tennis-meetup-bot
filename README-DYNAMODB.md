@@ -6,7 +6,7 @@ This guide explains how to set up and use DynamoDB Local for development and tes
 
 - Docker and Docker Compose
 - Python 3.13.2
-- AWS CLI (optional, for direct interaction with DynamoDB Local)
+- AWS CLI 
 
 ## Setup
 
