@@ -131,6 +131,7 @@ def seed_players(player_dao, courts):
     ]
     
     # Create players
+    guild_id = "1234567890123456789"  # Use consistent guild ID
     for player_data in sample_players:
         discord_id = player_data.pop('discord_id')
         username = player_data.pop('username')
@@ -138,13 +139,23 @@ def seed_players(player_dao, courts):
         interests = player_data.pop('interests')
         knows_ntrp = player_data.pop('knows_ntrp')
         
+        # Create preferences structure
+        preferences = {
+            "locations": player_data.pop('preferred_locations', []),
+            "skill_levels": player_data.pop('skill_level_preferences', []),
+            "gender": player_data.pop('gender_preference', 'none')
+        }
+        
         player_dao.create_player(
-            discord_id=discord_id,
+            guild_id=guild_id,
+            user_id=discord_id,
             username=username,
+            dob="01/01/1990",  # Default DOB
+            gender="other",    # Default gender
             ntrp_rating=ntrp_rating,
             interests=interests,
             knows_ntrp=knows_ntrp,
-            **player_data
+            preferences=preferences
         )
     
     print(f"Created {len(sample_players)} sample players")
@@ -163,16 +174,17 @@ def seed_schedules(schedule_dao):
             'player_id': '123456789',
             'start_time': now + 86400,  # Tomorrow
             'end_time': now + 86400 + 7200,  # Tomorrow + 2 hours
-            'use_profile_preferences': True
+            'preference_overrides': {}
         },
         {
             'player_id': '123456789',
             'start_time': now + 259200,  # 3 days from now
             'end_time': now + 259200 + 5400,  # 3 days from now + 1.5 hours
-            'location': 'qe-park',  # Using court_id instead of location name
-            'skill_level_preference': ['similar'],
-            'gender_preference': 'none',
-            'use_profile_preferences': False,
+            'preference_overrides': {
+                'location': 'qe-park',
+                'skill_level_preference': ['similar'],
+                'gender_preference': 'none'
+            },
             'recurrence': {
                 'type': 'weekly',
                 'days': ['monday', 'wednesday'],
@@ -183,13 +195,13 @@ def seed_schedules(schedule_dao):
             'player_id': '987654321',
             'start_time': now + 172800,  # 2 days from now
             'end_time': now + 172800 + 7200,  # 2 days from now + 2 hours
-            'use_profile_preferences': True
+            'preference_overrides': {}
         },
         {
             'player_id': '555555555',
             'start_time': now + 86400,  # Tomorrow
             'end_time': now + 86400 + 5400,  # Tomorrow + 1.5 hours
-            'use_profile_preferences': True,
+            'preference_overrides': {},
             'recurrence': {
                 'type': 'daily',
                 'until': now + 604800  # 7 days from now
@@ -198,6 +210,7 @@ def seed_schedules(schedule_dao):
     ]
     
     # Create schedules
+    guild_id = "1234567890123456789"  # Use consistent guild ID
     for schedule_data in sample_schedules:
         player_id = schedule_data.pop('player_id')
         start_time = schedule_data.pop('start_time')
@@ -205,7 +218,8 @@ def seed_schedules(schedule_dao):
         
         try:
             schedule_dao.create_schedule(
-                player_id=player_id,
+                guild_id=guild_id,
+                user_id=player_id,
                 start_time=start_time,
                 end_time=end_time,
                 **schedule_data

@@ -157,6 +157,36 @@ class UserCommands(commands.Cog):
         await self.find_matches_command.find_matches_for_schedule(interaction, schedule_id)
 
     @nextcord.slash_command(
+        name="matches-view",
+        description="View your completed or upcoming matches",
+        guild_ids=[TEST_GUILD_ID]
+    )
+    async def matches_view(
+        self,
+        interaction: nextcord.Interaction,
+        view_type: str = nextcord.SlashOption(
+            name="type",
+            description="Which matches to view?",
+            required=True,
+            choices=["completed", "upcoming"]
+        )
+    ):
+        """View your completed or upcoming matches."""
+        await self.matches_command.matches_view(interaction, view_type)
+
+    @nextcord.slash_command(
+        name="complete-match",
+        description="Complete a scheduled match and record results",
+        guild_ids=[TEST_GUILD_ID]
+    )
+    async def complete_match(
+        self,
+        interaction: nextcord.Interaction
+    ):
+        """Complete a scheduled match."""
+        await self.matches_command.complete_match_selection(interaction)
+
+    @nextcord.slash_command(
         name="matches",
         description="Manage tennis matches",
         guild_ids=[TEST_GUILD_ID]
@@ -164,22 +194,6 @@ class UserCommands(commands.Cog):
     async def matches(self, interaction: nextcord.Interaction):
         """Matches command group."""
         pass
-
-    @matches.subcommand(
-        name="view",
-        description=MATCHES_VIEW_DESC
-    )
-    async def matches_view(
-        self,
-        interaction: nextcord.Interaction,
-        match_id: str = nextcord.SlashOption(
-            name="match_id",
-            description="ID of the match to view",
-            required=True
-        )
-    ):
-        """View details of a specific match."""
-        await self.matches_command.view_match(interaction, match_id)
 
     @matches.subcommand(
         name="complete",

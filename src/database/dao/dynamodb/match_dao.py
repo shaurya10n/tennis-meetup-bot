@@ -400,6 +400,45 @@ class MatchDAO:
             print(f"Error getting matches by players: {e}")
             return []
     
+    def get_matches_by_players_and_time(self, guild_id: str, player_ids: List[str], 
+                                       start_time: int, end_time: int) -> List[Match]:
+        """Get matches between specific players at a specific time.
+        
+        Args:
+            guild_id: Discord server ID
+            player_ids: List of player user IDs
+            start_time: Start time as Unix timestamp
+            end_time: End time as Unix timestamp
+            
+        Returns:
+            List[Match]: List of matches between these players at this time
+        """
+        try:
+            # Get all matches for the guild
+            response = self.table.scan(
+                FilterExpression='guild_id = :guild_id',
+                ExpressionAttributeValues={
+                    ':guild_id': guild_id
+                }
+            )
+            
+            matches = []
+            for item in response.get('Items', []):
+                match = Match.from_dict(item)
+                
+                # Check if this match involves the same players and time
+                if (set(match.players) == set(player_ids) and 
+                    match.start_time == start_time and 
+                    match.end_time == end_time):
+                    matches.append(match)
+            
+            # Sort by creation time (most recent first)
+            matches.sort(key=lambda m: m.created_at, reverse=True)
+            return matches
+        except Exception as e:
+            print(f"Error getting matches by players and time: {e}")
+            return []
+    
     def has_existing_match_request(self, guild_id: str, player_ids: List[str], 
                                   start_time: int, end_time: int) -> bool:
         """Check if there's already a pending or scheduled match between these players.

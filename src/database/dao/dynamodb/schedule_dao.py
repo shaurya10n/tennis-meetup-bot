@@ -149,10 +149,8 @@ class ScheduleDAO:
         Returns:
             List[Schedule]: List of schedules for the user
         """
-        response = self.table.query(
-            IndexName="UserSchedulesIndex",
-            KeyConditionExpression="user_id = :user_id",
-            FilterExpression="guild_id = :guild_id",
+        response = self.table.scan(
+            FilterExpression="user_id = :user_id AND guild_id = :guild_id",
             ExpressionAttributeValues={
                 ":user_id": str(user_id),
                 ":guild_id": str(guild_id)
@@ -176,13 +174,12 @@ class ScheduleDAO:
         Returns:
             List[Schedule]: List of schedules for the user within the time range
         """
-        response = self.table.query(
-            IndexName="UserSchedulesIndex",
-            KeyConditionExpression="user_id = :user_id AND start_time BETWEEN :start_time AND :end_time",
-            FilterExpression="guild_id = :guild_id",
+        # Use scan with filters instead of query to avoid GSI key schema issues
+        response = self.table.scan(
+            FilterExpression="guild_id = :guild_id AND user_id = :user_id AND start_time >= :start_time AND start_time < :end_time",
             ExpressionAttributeValues={
-                ":user_id": str(user_id),
                 ":guild_id": str(guild_id),
+                ":user_id": str(user_id),
                 ":start_time": start_time,
                 ":end_time": end_time
             }

@@ -18,12 +18,14 @@ def test_matches_constants_import():
     """Test that matches constants can be imported."""
     try:
         from src.cogs.user.commands.matches.constants import (
-            MATCHES_VIEW_DESC, 
+            MATCHES_VIEW_COMPLETED_DESC, 
+            MATCHES_VIEW_UPCOMING_DESC,
             MATCHES_COMPLETE_DESC, 
             MATCH_NOT_FOUND
         )
         print("✅ Matches constants imported successfully")
-        print(f"✅ MATCHES_VIEW_DESC: {MATCHES_VIEW_DESC}")
+        print(f"✅ MATCHES_VIEW_COMPLETED_DESC: {MATCHES_VIEW_COMPLETED_DESC}")
+        print(f"✅ MATCHES_VIEW_UPCOMING_DESC: {MATCHES_VIEW_UPCOMING_DESC}")
         print(f"✅ MATCHES_COMPLETE_DESC: {MATCHES_COMPLETE_DESC}")
         print(f"✅ MATCH_NOT_FOUND: {MATCH_NOT_FOUND}")
         return True
@@ -78,7 +80,7 @@ def test_wrapper_integration():
         
         required_imports = [
             "from .matches.command import MatchesCommand",
-            "from .matches.constants import MATCHES_VIEW_DESC, MATCHES_COMPLETE_DESC"
+            "from .matches.constants import MATCHES_VIEW_COMPLETED_DESC, MATCHES_VIEW_UPCOMING_DESC, MATCHES_COMPLETE_DESC"
         ]
         
         all_imports_found = True
@@ -92,7 +94,8 @@ def test_wrapper_integration():
         # Check for command registration
         required_commands = [
             "@nextcord.slash_command(\n        name=\"matches\"",
-            "@matches.subcommand(\n        name=\"view\"",
+            "@matches.subcommand(\n        name=\"view-completed\"",
+            "@matches.subcommand(\n        name=\"view-upcoming\"",
             "@matches.subcommand(\n        name=\"complete\""
         ]
         

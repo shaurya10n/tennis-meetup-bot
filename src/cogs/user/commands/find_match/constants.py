@@ -42,8 +42,9 @@ EMBEDS = {
 BUTTONS = {
     "PREVIOUS": "◀️ Previous",
     "NEXT": "Next ▶️",
-    "ACCEPT": "✅ Accept Match",
-    "DECLINE": "❌ Decline",
+    "ACCEPT": "📤 Send Invitation",
+    "NOT_INTERESTED": "😐 Not Interested",
+    "CANCEL_INVITATION": "❌ Cancel Invitation",
     "VIEW_DETAILS": "📋 View Details"
 }
 

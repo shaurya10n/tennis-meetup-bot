@@ -52,7 +52,14 @@ BUTTONS = {
 # Schedule display format
 SCHEDULE_FORMAT = "{time}"
 TIME_FORMAT = "%I:%M %p"  # 12-hour format with AM/PM (e.g., 05:00 PM)
-DATE_FORMAT = "%A, %B %d"  # e.g., Monday, January 1
+DATE_FORMAT = "%A, %B %d"
+
+# Automatic matchmaking settings
+AUTOMATIC_MATCHMAKING = {
+    "ENABLED": True,  # Set to False to disable automatic matchmaking
+    "MAX_SUGGESTIONS": 3,  # Maximum number of suggestions to show
+    "MIN_SCORE": 0.5,  # Minimum match score to show suggestions
+}  # e.g., Monday, January 1
 
 # Confirmation messages
 CONFIRM_MESSAGES = {

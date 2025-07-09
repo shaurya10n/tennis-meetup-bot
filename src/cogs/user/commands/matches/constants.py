@@ -1,7 +1,9 @@
 """Constants for matches commands."""
 
 # Command descriptions
-MATCHES_VIEW_DESC = "View details of a specific match"
+MATCHES_VIEW_DESC = "View your completed or upcoming matches"
+MATCHES_VIEW_COMPLETED_DESC = "View your completed matches"
+MATCHES_VIEW_UPCOMING_DESC = "View your upcoming matches"
 MATCHES_COMPLETE_DESC = "Complete a match and record results"
 
 # Error messages
