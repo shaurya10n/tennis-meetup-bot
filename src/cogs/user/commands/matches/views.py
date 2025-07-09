@@ -3,12 +3,12 @@
 import logging
 import re
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from decimal import Decimal
 
 import nextcord
 from nextcord import Interaction, Embed, Color, ButtonStyle, TextInputStyle
-from nextcord.ui import View, Button, Modal, TextInput
+from nextcord.ui import View, Button, Modal, TextInput, Select
 
 from src.database.models.dynamodb.match import Match
 from src.database.dao.dynamodb.match_dao import MatchDAO
@@ -20,19 +20,97 @@ from .constants import *
 logger = logging.getLogger(__name__)
 
 
-class CompleteMatchModal(Modal):
-    """Modal for completing a match with results."""
+class CompleteMatchView(View):
+    """View for completing a match with results."""
     
     def __init__(self, match: Match, match_dao: MatchDAO):
-        """Initialize the completion modal.
+        """Initialize the completion view.
         
         Args:
             match: The match to complete
             match_dao: Match data access object
         """
+        super().__init__(timeout=300)
+        self.match = match
+        self.match_dao = match_dao
+        
+        # Create winner select dropdown
+        from src.database.dao.dynamodb.player_dao import PlayerDAO
+        from src.config.dynamodb_config import get_db
+        player_dao = PlayerDAO(get_db())
+        options = []
+        for player_id in self.match.players:
+            player = player_dao.get_player(str(self.match.guild_id), player_id)
+            if player:
+                options.append(nextcord.SelectOption(label=player.username, value=player_id))
+            else:
+                options.append(nextcord.SelectOption(label=f"Unknown Player ({player_id})", value=player_id))
+        
+        self.winner_select = Select(
+            placeholder="Select the winner",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="winner_select"
+        )
+        self.add_item(self.winner_select)
+        
+        # Add button to open score modal
+        self.add_item(CompleteMatchButton())
+    
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        """Handle select interaction."""
+        if interaction.data.get("custom_id") == "winner_select":
+            # Store the selected winner
+            self.selected_winner = interaction.data["values"][0]
+            await interaction.response.send_message(
+                f"✅ Winner selected! Now click 'Enter Match Details' to complete the form.",
+                ephemeral=True
+            )
+            return False
+        return True
+
+
+class CompleteMatchButton(Button):
+    """Button to open the match completion modal."""
+    
+    def __init__(self):
+        super().__init__(
+            label="Enter Match Details",
+            style=ButtonStyle.primary,
+            custom_id="complete_match_button"
+        )
+    
+    async def callback(self, interaction: Interaction):
+        """Open the completion modal."""
+        view = self.view
+        if not hasattr(view, 'selected_winner'):
+            await interaction.response.send_message(
+                "❌ Please select a winner first!",
+                ephemeral=True
+            )
+            return
+        
+        # Create and show the modal
+        modal = CompleteMatchModal(view.match, view.match_dao, view.selected_winner)
+        await interaction.response.send_modal(modal)
+
+
+class CompleteMatchModal(Modal):
+    """Modal for completing a match with results."""
+    
+    def __init__(self, match: Match, match_dao: MatchDAO, winner_id: str):
+        """Initialize the completion modal.
+        
+        Args:
+            match: The match to complete
+            match_dao: Match data access object
+            winner_id: Pre-selected winner ID
+        """
         super().__init__(title="Complete Match", timeout=300)
         self.match = match
         self.match_dao = match_dao
+        self.winner_id = winner_id
         
         # Score input
         self.score_input = TextInput(
@@ -43,16 +121,6 @@ class CompleteMatchModal(Modal):
             max_length=50
         )
         self.add_item(self.score_input)
-        
-        # Winner input
-        self.winner_input = TextInput(
-            label="Winner (username)",
-            placeholder="Enter the winner's username",
-            style=TextInputStyle.short,
-            required=True,
-            max_length=50
-        )
-        self.add_item(self.winner_input)
         
         # Quality score input
         self.quality_input = TextInput(
@@ -88,16 +156,12 @@ class CompleteMatchModal(Modal):
                 )
                 return
             
-            # Validate winner
-            winner_username = self.winner_input.value.strip()
-            winner_id = self._find_winner_id(winner_username)
-            if not winner_id:
-                await Responses.send_error(
-                    interaction,
-                    "Winner Not Found",
-                    f"Could not find player with username '{winner_username}'. Please check the spelling."
-                )
-                return
+            # Get winner username
+            from src.database.dao.dynamodb.player_dao import PlayerDAO
+            from src.config.dynamodb_config import get_db
+            player_dao = PlayerDAO(get_db())
+            winner_player = player_dao.get_player(str(self.match.guild_id), self.winner_id)
+            winner_username = winner_player.username if winner_player else self.winner_id
             
             # Parse quality score
             quality_score = None
@@ -128,7 +192,7 @@ class CompleteMatchModal(Modal):
                 self.match.match_id,
                 status="completed",
                 score=score,
-                winner=winner_id,
+                winner=self.winner_id,
                 match_quality_score=quality_score,
                 notes=notes
             )
@@ -223,6 +287,104 @@ class CompleteMatchModal(Modal):
                 return player_id
         
         return None
+
+
+class CompleteMatchSelectionView(View):
+    """View for selecting a match to complete."""
+    
+    def __init__(self, matches: List[Match], match_dao: MatchDAO, player_dao: PlayerDAO):
+        """Initialize the selection view.
+        
+        Args:
+            matches: List of scheduled matches
+            match_dao: Match data access object
+            player_dao: Player data access object
+        """
+        super().__init__(timeout=300)
+        self.matches = matches
+        self.match_dao = match_dao
+        self.player_dao = player_dao
+        
+        # Create match selection dropdown
+        options = []
+        for match in matches:
+            # Get player names for the match
+            player_names = []
+            for player_id in match.players:
+                player = player_dao.get_player(str(match.guild_id), player_id)
+                if player:
+                    player_names.append(player.username)
+                else:
+                    player_names.append(f"Unknown Player ({player_id})")
+            
+            # Format match description
+            if match.match_type == "singles":
+                match_desc = f"{player_names[0]} vs {player_names[1]}"
+            else:
+                match_desc = f"{' vs '.join(player_names[:2])} vs {' vs '.join(player_names[2:])}"
+            
+            # Add time info
+            start_time = datetime.fromtimestamp(match.start_time)
+            time_str = start_time.strftime('%A, %B %d at %I:%M %p')
+            label = f"{match_desc} - {time_str}"
+            
+            # Truncate if too long (Discord limit is 100 characters)
+            if len(label) > 100:
+                label = label[:97] + "..."
+            
+            options.append(nextcord.SelectOption(
+                label=label,
+                value=match.match_id,
+                description=f"Match ID: {match.match_id[:8]}..."
+            ))
+        
+        self.match_select = Select(
+            placeholder="Select a match to complete",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="match_select"
+        )
+        self.add_item(self.match_select)
+    
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        """Handle select interaction."""
+        if interaction.data.get("custom_id") == "match_select":
+            selected_match_id = interaction.data["values"][0]
+            
+            # Find the selected match
+            selected_match = None
+            for match in self.matches:
+                if match.match_id == selected_match_id:
+                    selected_match = match
+                    break
+            
+            if not selected_match:
+                await interaction.response.send_message(
+                    "❌ Selected match not found. Please try again.",
+                    ephemeral=True
+                )
+                return False
+            
+            # Check if user is a player in the match
+            user_id = str(interaction.user.id)
+            if user_id not in selected_match.players:
+                await interaction.response.send_message(
+                    "❌ You are not a player in this match.",
+                    ephemeral=True
+                )
+                return False
+            
+            # Show completion view for the selected match
+            completion_view = CompleteMatchView(selected_match, self.match_dao)
+            await interaction.response.send_message(
+                f"🎾 Complete Match\n\n**Selected:** {selected_match.match_id[:8]}...\n\n1. Select the winner from the dropdown below\n2. Click 'Enter Match Details' to fill in the score and other details",
+                view=completion_view,
+                ephemeral=True
+            )
+            return False
+        
+        return True
 
 
 def create_match_embed(match: Match, player_dao: PlayerDAO, court_dao: CourtDAO) -> Embed:

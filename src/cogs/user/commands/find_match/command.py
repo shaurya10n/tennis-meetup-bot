@@ -241,6 +241,9 @@ class FindMatchesCommand:
         embed = Embed(title=title, description=description, color=Color.green())
         
         for i, suggestion in enumerate(suggestions[:5], 1):  # Show top 5
+            # Check if there's an existing match for this suggestion
+            match_status = self._get_match_status_for_suggestion(suggestion)
+            
             # Format players
             player_names = [p.username for p in suggestion.players]
             if suggestion.match_type == "singles":
@@ -264,12 +267,21 @@ class FindMatchesCommand:
             if len(suggestion.reasons) > 3:
                 reasons_text += "..."
             
+            # Add status indicator if match exists
+            status_text = ""
+            if match_status == "scheduled":
+                status_text = "\n✅ **Match Accepted**"
+            elif match_status == "pending_confirmation":
+                status_text = "\n⏳ **Match Pending Confirmation**"
+            elif match_status == "cancelled":
+                status_text = "\n❌ **Match Cancelled**"
+            
             field_value = (
                 f"**{players_text}** ({suggestion.match_type.title()})\n"
                 f"⏰ {time_text}\n"
                 f"📍 {court_text}\n"
                 f"📊 {score_text}\n"
-                f"✨ {reasons_text}"
+                f"✨ {reasons_text}{status_text}"
             )
             
             embed.add_field(
@@ -288,6 +300,26 @@ class FindMatchesCommand:
         embed.set_footer(text="Click the buttons below to accept or decline matches")
         
         return embed
+    
+    def _get_match_status_for_suggestion(self, suggestion: MatchSuggestion) -> str:
+        """Get the current match status for a suggestion by checking the database."""
+        try:
+            # Check if there's an existing match for these players and time
+            existing_matches = self.match_dao.get_matches_by_players_and_time(
+                str(suggestion.guild_id),
+                [p.user_id for p in suggestion.players],
+                suggestion.suggested_time[0],
+                suggestion.suggested_time[1]
+            )
+            
+            if existing_matches:
+                # Return the status of the most recent match
+                return existing_matches[0].status
+            
+            return None
+        except Exception as e:
+            logger.error(f"Error checking match status for suggestion: {e}")
+            return None
 
 
 # Command handler instance

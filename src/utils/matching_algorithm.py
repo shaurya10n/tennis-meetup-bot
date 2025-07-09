@@ -56,6 +56,7 @@ class MatchSuggestion:
     match_type: str  # "singles" or "doubles"
     compatibility_details: Dict[str, float]
     reasons: List[str]
+    guild_id: str  # Discord server ID
 
 
 class TennisMatchingAlgorithm:
@@ -294,7 +295,8 @@ class TennisMatchingAlgorithm:
                     overall_score=compatibility['overall_score'],
                     match_type="singles",
                     compatibility_details=compatibility,
-                    reasons=compatibility['reasons']
+                    reasons=compatibility['reasons'],
+                    guild_id=player.guild_id
                 )
                 suggestions.append(suggestion)
         
@@ -348,7 +350,8 @@ class TennisMatchingAlgorithm:
                 overall_score=compatibility['overall_score'],
                 match_type="doubles",
                 compatibility_details=compatibility,
-                reasons=compatibility['reasons']
+                reasons=compatibility['reasons'],
+                guild_id=player.guild_id
             )
             suggestions.append(suggestion)
         
@@ -640,16 +643,27 @@ class TennisMatchingAlgorithm:
         overlap_start = max(schedule1.start_time, schedule2.start_time)
         overlap_end = min(schedule1.end_time, schedule2.end_time)
         
-        # Default to 90 minutes for a match
-        match_duration = 90 * 60  # 90 minutes in seconds
+        # Calculate available time for the match
+        available_duration = overlap_end - overlap_start
         
-        # Ensure we don't exceed the overlap
-        if overlap_end - overlap_start < match_duration:
-            match_duration = overlap_end - overlap_start
+        # Default to 90 minutes for a match, but respect available time
+        match_duration = min(90 * 60, available_duration)  # 90 minutes or available time, whichever is less
         
-        # Start the match 15 minutes after the overlap starts to allow for warm-up
-        match_start = overlap_start + (15 * 60)
+        # If we have less than 60 minutes available, use the full available time
+        if available_duration < 60 * 60:
+            match_duration = available_duration
+        
+        # Calculate warm-up time (15 minutes or 25% of match time, whichever is less)
+        warmup_time = min(15 * 60, match_duration // 4)
+        
+        # Start the match after warm-up, but ensure we don't exceed the overlap
+        match_start = overlap_start + warmup_time
         match_end = match_start + match_duration
+        
+        # Ensure the match doesn't exceed the overlap
+        if match_end > overlap_end:
+            match_end = overlap_end
+            match_start = match_end - match_duration
         
         return match_start, match_end
     
@@ -662,14 +676,27 @@ class TennisMatchingAlgorithm:
         overlap_start = max(s.start_time for s in schedules)
         overlap_end = min(s.end_time for s in schedules)
         
-        # Default to 90 minutes for doubles
-        match_duration = 90 * 60
+        # Calculate available time for the match
+        available_duration = overlap_end - overlap_start
         
-        if overlap_end - overlap_start < match_duration:
-            match_duration = overlap_end - overlap_start
+        # Default to 90 minutes for doubles, but respect available time
+        match_duration = min(90 * 60, available_duration)  # 90 minutes or available time, whichever is less
         
-        match_start = overlap_start + (15 * 60)
+        # If we have less than 60 minutes available, use the full available time
+        if available_duration < 60 * 60:
+            match_duration = available_duration
+        
+        # Calculate warm-up time (15 minutes or 25% of match time, whichever is less)
+        warmup_time = min(15 * 60, match_duration // 4)
+        
+        # Start the match after warm-up, but ensure we don't exceed the overlap
+        match_start = overlap_start + warmup_time
         match_end = match_start + match_duration
+        
+        # Ensure the match doesn't exceed the overlap
+        if match_end > overlap_end:
+            match_end = overlap_end
+            match_start = match_end - match_duration
         
         return match_start, match_end
     

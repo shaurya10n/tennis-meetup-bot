@@ -9,6 +9,7 @@ from src.database.dao.dynamodb.schedule_dao import ScheduleDAO
 from src.database.dao.dynamodb.player_dao import PlayerDAO
 from src.database.models.dynamodb.schedule import Schedule
 from src.utils.responses import Responses
+from src.utils.matching_algorithm import TennisMatchingAlgorithm
 from .constants import (
     ERRORS,
     SUCCESS,
@@ -17,7 +18,8 @@ from .constants import (
     CONFIRM_MESSAGES,
     HELP,
     DATE_FORMAT,
-    TIME_FORMAT
+    TIME_FORMAT,
+    AUTOMATIC_MATCHMAKING
 )
 from .parser.nlp_parser import TimeParser
 from .views.schedule_view import ScheduleListView, ConfirmView
@@ -34,6 +36,15 @@ class ScheduleCommands:
         self.schedule_dao = ScheduleDAO(db)
         self.player_dao = PlayerDAO(db)
         self.time_parser = TimeParser()
+        
+        # Initialize matching algorithm for automatic matchmaking
+        from src.database.dao.dynamodb.court_dao import CourtDAO
+        from src.database.dao.dynamodb.match_dao import MatchDAO
+        self.court_dao = CourtDAO(db)
+        self.match_dao = MatchDAO(db)
+        self.matching_algorithm = TennisMatchingAlgorithm(
+            self.player_dao, self.schedule_dao, self.court_dao, self.match_dao
+        )
 
     async def _check_profile_complete(
         self,
@@ -110,6 +121,159 @@ class ScheduleCommands:
         except Exception as e:
             logger.error(f"Error extracting recurrence info: {e}", exc_info=True)
             return None
+
+    async def _trigger_automatic_matchmaking(self, interaction: nextcord.Interaction, schedule: Schedule):
+        """Trigger automatic matchmaking for a newly created schedule.
+        
+        Args:
+            interaction: Discord interaction
+            schedule: The newly created schedule
+        """
+        try:
+            # Check if automatic matchmaking is enabled
+            if not AUTOMATIC_MATCHMAKING["ENABLED"]:
+                logger.info("Automatic matchmaking is disabled")
+                return
+            
+            logger.info(f"Triggering automatic matchmaking for schedule {schedule.schedule_id}")
+            
+            # Find matches for this specific schedule
+            suggestions = self.matching_algorithm.find_matches_for_schedule(
+                str(interaction.guild.id), schedule.schedule_id
+            )
+            
+            if not suggestions:
+                logger.info(f"No match suggestions found for schedule {schedule.schedule_id}")
+                # Send message to user that no matches were found
+                await interaction.followup.send(
+                    embed=nextcord.Embed(
+                        title="🎾 No Matches Found",
+                        description=(
+                            "No suitable matches found for your new schedule.\n\n"
+                            "This could be because:\n"
+                            "• No other players are available during this time\n"
+                            "• No players match your skill level or gender preferences\n"
+                            "• No players prefer your preferred locations\n\n"
+                            "Don't worry! Your schedule is still saved and other players can find you when they add their availability."
+                        ),
+                        color=nextcord.Color.orange()
+                    ),
+                    ephemeral=True
+                )
+                return
+            
+            # Filter out suggestions that already have matches and meet minimum score
+            valid_suggestions = []
+            for suggestion in suggestions:
+                # Check if there's already a match for this suggestion
+                existing_matches = self.match_dao.get_matches_by_players_and_time(
+                    str(suggestion.guild_id),
+                    [p.user_id for p in suggestion.players],
+                    suggestion.suggested_time[0],
+                    suggestion.suggested_time[1]
+                )
+                
+                # Only include if no existing match and meets minimum score
+                if not existing_matches and suggestion.overall_score >= AUTOMATIC_MATCHMAKING["MIN_SCORE"]:
+                    valid_suggestions.append(suggestion)
+            
+            if not valid_suggestions:
+                logger.info(f"No valid match suggestions found for schedule {schedule.schedule_id}")
+                # Send message to user that no valid matches were found
+                await interaction.followup.send(
+                    embed=nextcord.Embed(
+                        title="🎾 No Available Matches",
+                        description=(
+                            "No available matches found for your new schedule.\n\n"
+                            "This could be because:\n"
+                            "• All potential matches have already been scheduled\n"
+                            "• Other players have pending match requests for this time\n"
+                            "• Recent match requests were declined\n\n"
+                            "Your schedule is still saved and will be available for future matchmaking!"
+                        ),
+                        color=nextcord.Color.blue()
+                    ),
+                    ephemeral=True
+                )
+                return
+            
+            # Sort by score and take the best matches
+            valid_suggestions.sort(key=lambda x: x.overall_score, reverse=True)
+            best_suggestions = valid_suggestions[:AUTOMATIC_MATCHMAKING["MAX_SUGGESTIONS"]]
+            
+            # Create match suggestions view
+            from src.cogs.user.commands.find_match.views import MatchSuggestionView
+            view = MatchSuggestionView(best_suggestions, self.match_dao, self.schedule_dao)
+            
+            # Create embed with match suggestions
+            embed = self._create_automatic_matches_embed(best_suggestions, schedule)
+            
+            # Send the match suggestions
+            await interaction.followup.send(
+                embed=embed,
+                view=view,
+                ephemeral=True
+            )
+            
+            logger.info(f"Sent {len(best_suggestions)} automatic match suggestions for schedule {schedule.schedule_id}")
+            
+        except Exception as e:
+            logger.error(f"Error in automatic matchmaking: {e}", exc_info=True)
+            # Don't fail the schedule creation if matchmaking fails
+            pass
+    
+    def _create_automatic_matches_embed(self, suggestions, schedule):
+        """Create an embed for automatic match suggestions."""
+        import nextcord
+        
+        embed = nextcord.Embed(
+            title="🎾 Automatic Match Suggestions",
+            description=f"Found {len(suggestions)} potential matches for your new schedule!",
+            color=nextcord.Color.blue()
+        )
+        
+        for i, suggestion in enumerate(suggestions, 1):
+            # Format players
+            player_names = [p.username for p in suggestion.players]
+            if suggestion.match_type == "singles":
+                players_text = f"{player_names[0]} vs {player_names[1]}"
+            else:
+                players_text = f"{' vs '.join(player_names[:2])} vs {' vs '.join(player_names[2:])}"
+            
+            # Format time
+            from datetime import datetime
+            start_time = datetime.fromtimestamp(suggestion.suggested_time[0])
+            end_time = datetime.fromtimestamp(suggestion.suggested_time[1])
+            time_text = f"{start_time.strftime('%A, %B %d at %I:%M %p')} - {end_time.strftime('%I:%M %p')}"
+            
+            # Format court
+            court_text = suggestion.suggested_court.name if suggestion.suggested_court else "TBD"
+            
+            # Format score
+            score_text = f"Match Score: {suggestion.overall_score:.1f}/1.0"
+            
+            # Format reasons
+            reasons_text = ", ".join(suggestion.reasons[:2])  # Show top 2 reasons
+            if len(suggestion.reasons) > 2:
+                reasons_text += "..."
+            
+            field_value = (
+                f"**{players_text}** ({suggestion.match_type.title()})\n"
+                f"⏰ {time_text}\n"
+                f"📍 {court_text}\n"
+                f"📊 {score_text}\n"
+                f"✨ {reasons_text}"
+            )
+            
+            embed.add_field(
+                name=f"Match {i}",
+                value=field_value,
+                inline=False
+            )
+        
+        embed.set_footer(text="Click the buttons below to accept or decline matches")
+        
+        return embed
 
     async def add_schedule(
         self,
@@ -268,6 +432,9 @@ class ScheduleCommands:
                     ),
                     ephemeral=True
                 )
+                
+                # Trigger automatic matchmaking
+                await self._trigger_automatic_matchmaking(interaction, updated_schedule)
 
             # Show preferences view using followup
             await show_schedule_preferences(interaction, schedule, after_preferences)
