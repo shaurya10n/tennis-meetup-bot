@@ -1,0 +1,15 @@
+version: "3"
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - "8000:8000"
+  bot:
+    image: 605926691421.dkr.ecr.us-east-1.amazonaws.com/tennis-meetup-bot:latest
+    env_file: .env
+    depends_on:
+      - dynamodb
+    ports:
+      - "80:8000"
+    environment:
+      - DYNAMODB_ENDPOINT=http://dynamodb:8000

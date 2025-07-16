@@ -68,3 +68,16 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Deployment files
+.env.prod
+deploy.config
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+
+# Backups
+backups/

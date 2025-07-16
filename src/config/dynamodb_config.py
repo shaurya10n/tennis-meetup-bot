@@ -10,20 +10,22 @@ def get_db():
     """
     Get DynamoDB resource based on environment
     """
-    # Check if we're in local development or production
-    is_local = os.getenv("ENVIRONMENT", "development") == "development"
-    
-    if is_local:
+    # Default to production for safety
+    environment = os.getenv("ENVIRONMENT", "production").lower()
+
+    if environment in ["development", "local"]:
         # Local development using DynamoDB Local
         print("Connecting to local DynamoDB instance...")
-        endpoint_url = os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
+        endpoint_url = os.getenv("DYNAMODB_ENDPOINT")
+        if not endpoint_url:
+            raise ValueError("DYNAMODB_ENDPOINT must be set for local development.")
         return boto3.resource('dynamodb',
             endpoint_url=endpoint_url,
             region_name=os.getenv("AWS_REGION", "us-west-2"),
             aws_access_key_id='dummy',
             aws_secret_access_key='dummy')
     else:
-        # Production environment - use AWS credentials
+        # Production environment - use AWS credentials and AWS DynamoDB
         print("Connecting to AWS DynamoDB...")
         return boto3.resource('dynamodb',
             region_name=os.getenv("AWS_REGION", "us-west-2"))
