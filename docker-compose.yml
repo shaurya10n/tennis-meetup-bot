@@ -12,4 +12,5 @@ services:
     ports:
       - "80:8000"
     environment:
+      - TZ=America/Vancouver
       - DYNAMODB_ENDPOINT=http://dynamodb:8000

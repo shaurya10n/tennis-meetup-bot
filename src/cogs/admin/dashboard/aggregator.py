@@ -10,6 +10,7 @@ from src.database.dao.dynamodb.player_dao import PlayerDAO
 from src.database.dao.dynamodb.court_dao import CourtDAO
 from src.database.models.schedule import Schedule
 from src.database.models.player import Player
+from src.utils.config_loader import ConfigLoader
 from .constants import TIME_SLOTS
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,8 @@ class ScheduleAggregator:
         self.schedule_dao = schedule_dao
         self.player_dao = player_dao
         self.court_dao = court_dao
-        self.timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
 
     async def get_locations(self) -> List[str]:
         """Get all unique locations from the courts database.

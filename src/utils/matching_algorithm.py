@@ -25,6 +25,7 @@ from src.database.models.dynamodb.player import Player
 from src.database.models.dynamodb.schedule import Schedule
 from src.database.models.dynamodb.court import Court
 from src.database.models.dynamodb.match import Match
+from src.utils.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,8 @@ class TennisMatchingAlgorithm:
         self.schedule_dao = schedule_dao
         self.court_dao = court_dao
         self.match_dao = match_dao
-        self.timezone = ZoneInfo("America/Vancouver")
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
         
         # Configuration weights for different factors
         self.weights = {

@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 from zoneinfo import ZoneInfo
 
 from src.cogs.admin.dashboard.constants import EMBEDS, BUTTONS, TIME_FORMAT
+from src.utils.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ class CurrentlyPlayingView(nextcord.ui.View):
         super().__init__(timeout=180)  # 3 minute timeout
         self.playing_data = playing_data
         self.user_dict = user_dict
-        self.timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
 
     async def get_embed(self) -> nextcord.Embed:
         """Get embed for currently playing users."""

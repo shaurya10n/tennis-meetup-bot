@@ -1,7 +1,11 @@
+"""Schedule model for DynamoDB."""
+
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from zoneinfo import ZoneInfo
+from decimal import Decimal
+from src.utils.config_loader import ConfigLoader
 
 
 class Schedule:
@@ -70,7 +74,7 @@ class Schedule:
                  match_id: Optional[str] = None,
                  created_at: Optional[str] = None,  # ISO format with UTC timezone
                  updated_at: Optional[str] = None,  # ISO format with UTC timezone
-                 timezone_str: str = "America/Vancouver"):
+                 timezone_str: str = None):
         """Initialize a Schedule instance."""
         self.guild_id = str(guild_id)
         self.user_id = str(user_id)
@@ -88,8 +92,13 @@ class Schedule:
         self.created_at = created_at or now_iso
         self.updated_at = updated_at or now_iso
         
-        self.timezone_str = timezone_str
-        self.timezone = ZoneInfo(timezone_str)
+        # Use configured timezone if not provided
+        if timezone_str is None:
+            config_loader = ConfigLoader()
+            self.timezone_str = str(config_loader.get_timezone())
+        else:
+            self.timezone_str = timezone_str
+        self.timezone = ZoneInfo(self.timezone_str)
     
     def to_dict(self) -> dict:
         """Convert schedule to dictionary for DynamoDB storage."""
@@ -146,7 +155,7 @@ class Schedule:
             match_id=data.get('match_id'),
             created_at=data.get('created_at'),
             updated_at=data.get('updated_at'),
-            timezone_str=data.get('timezone', 'America/Vancouver')
+            timezone_str=data.get('timezone')  # Will use configured timezone if None
         )
     
     def to_datetime(self, timestamp: int) -> datetime:

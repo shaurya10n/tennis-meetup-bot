@@ -9,6 +9,7 @@ import re
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 from rapidfuzz import fuzz, process
+from src.utils.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +18,10 @@ class TimeParser:
 
     def __init__(self):
         """Initialize parser with timezone settings."""
-        self.timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
         self.settings = {
-            'TIMEZONE': 'America/Vancouver',
+            'TIMEZONE': str(self.timezone),
             'RETURN_AS_TIMEZONE_AWARE': True,
             'PREFER_DATES_FROM': 'future',
             'RELATIVE_BASE': datetime.now(self.timezone),
@@ -146,7 +148,11 @@ class TimeParser:
                 logger.warning(f"Invalid time range: end ({end_time}) not after start ({start_time})")
                 return None, None, "End time must be after start time"
             
-            if start_time < datetime.now(self.timezone):
+            # Debug logging for time comparison
+            now_in_tz = datetime.now(self.timezone)
+            logger.info(f"DEBUG: Comparing start_time={start_time} to now_in_tz={now_in_tz} (timezone={self.timezone})")
+            
+            if start_time < now_in_tz:
                 logger.warning(f"Time in past: {start_time}")
                 return None, None, "Cannot create schedule in the past"
 

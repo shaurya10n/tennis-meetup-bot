@@ -11,6 +11,7 @@ from src.database.dao.dynamodb.schedule_dao import ScheduleDAO
 from src.database.dao.dynamodb.player_dao import PlayerDAO
 from src.database.dao.dynamodb.court_dao import CourtDAO
 from src.utils.responses import Responses
+from src.utils.config_loader import ConfigLoader
 from .aggregator import ScheduleAggregator
 from .constants import EMBEDS, SUCCESS, ERRORS
 from .views.location_view import LocationAvailabilityView
@@ -28,7 +29,8 @@ class DashboardCommands:
         self.player_dao = PlayerDAO(db)
         self.court_dao = CourtDAO(db)
         self.aggregator = ScheduleAggregator(self.schedule_dao, self.player_dao, self.court_dao)
-        self.timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
         self.last_channel_id = None  # Track last channel where dashboard was posted
 
     async def view_dashboard(
