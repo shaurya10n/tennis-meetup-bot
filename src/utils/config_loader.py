@@ -3,6 +3,7 @@ import yaml
 from pathlib import Path
 import logging
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,19 @@ class ConfigLoader:
             dict: The loaded configuration
         """
         return self._config
+
+    def get_timezone(self) -> ZoneInfo:
+        """Get the configured timezone for the application.
+        
+        Returns:
+            ZoneInfo: The configured timezone, defaults to America/New_York if not configured
+        """
+        try:
+            timezone_str = self._config.get('app', {}).get('timezone', 'America/New_York')
+            return ZoneInfo(timezone_str)
+        except Exception as e:
+            logger.warning(f"Failed to load configured timezone, using default: {e}")
+            return ZoneInfo("America/New_York")
 
     def get_channel_name(self, channel_key: str) -> Optional[str]:
         """Get channel name from config.

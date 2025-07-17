@@ -1,38 +1,39 @@
-"""Location-based availability view for the dashboard."""
+"""View for displaying location availability."""
 
 import nextcord
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Tuple
 from zoneinfo import ZoneInfo
 
-from src.cogs.admin.dashboard.constants import EMBEDS, BUTTONS, DATE_FORMAT, TIME_FORMAT
+from src.cogs.admin.dashboard.constants import EMBEDS, BUTTONS, TIME_FORMAT, DATE_FORMAT
+from src.utils.config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
 class LocationAvailabilityView(nextcord.ui.View):
-    """View for displaying availability by location."""
+    """View for displaying player availability by location."""
 
     def __init__(
         self,
-        location_data: Dict[str, Dict[str, Dict[str, List[int]]]],
+        location_data: Dict[str, Dict[str, List[Tuple[int, datetime, datetime]]]],
         user_dict: Dict[int, Dict],
-        locations: List[str],
-        current_location_index: int = 0
+        locations: List[str]
     ):
         """Initialize view with location data.
         
         Args:
-            location_data (Dict): Nested dictionary with availability data by location
+            location_data (Dict): Dictionary mapping locations to date data
             user_dict (Dict[int, Dict]): Dictionary mapping user IDs to user info
-            locations (List[str]): List of all locations
-            current_location_index (int): Index of current location to display
+            locations (List[str]): List of available locations
         """
         super().__init__(timeout=180)  # 3 minute timeout
         self.location_data = location_data
         self.user_dict = user_dict
         self.locations = locations
-        self.current_location_index = current_location_index
+        self.current_location_index = 0
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
         
         # Update button states
         self._update_buttons()
@@ -73,12 +74,11 @@ class LocationAvailabilityView(nextcord.ui.View):
         dates = sorted(location_data.keys())
         
         # Convert dates to display format and create fields
-        timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
-        today = datetime.now(timezone).strftime("%Y-%m-%d")
+        today = datetime.now(self.timezone).strftime("%Y-%m-%d")
         
         for date_str in dates:
             # Format date for display
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone)
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=self.timezone)
             display_date = date_obj.strftime(DATE_FORMAT)
             
             # Add "Today" marker if applicable
@@ -97,7 +97,7 @@ class LocationAvailabilityView(nextcord.ui.View):
                     
                 # Format user list
                 user_strings = []
-                for user_id in users:
+                for user_id, start_time, end_time in users:
                     user_info = self.user_dict.get(user_id, {})
                     username = user_info.get("username", f"User {user_id}")
                     rating = user_info.get("ntrp_rating", "N/A")

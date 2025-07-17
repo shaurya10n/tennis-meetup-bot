@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from zoneinfo import ZoneInfo
 from google.cloud import firestore
+from src.utils.config_loader import ConfigLoader
 
 @dataclass
 class Schedule:
@@ -25,6 +26,7 @@ class Schedule:
         use_profile_preferences (bool): Whether to use preferences from player's profile
         created_at (datetime): When schedule was created
         updated_at (Optional[datetime]): Last update timestamp
+        timezone (ZoneInfo): Timezone for the schedule
     """
     user_id: int
     start_time: datetime
@@ -36,9 +38,14 @@ class Schedule:
     use_profile_preferences: bool = True  # Default to using profile preferences
     created_at: datetime = None
     updated_at: Optional[datetime] = None
-    timezone: ZoneInfo = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+    timezone: ZoneInfo = None
 
     def __post_init__(self):
+        # Use configured timezone if not provided
+        if self.timezone is None:
+            config_loader = ConfigLoader()
+            self.timezone = config_loader.get_timezone()
+            
         if self.created_at is None:
             self.created_at = datetime.now(self.timezone)
 
@@ -77,7 +84,8 @@ class Schedule:
     @staticmethod
     def from_dict(data: dict) -> 'Schedule':
         """Create schedule instance from dictionary."""
-        timezone = ZoneInfo("America/Vancouver")  # TODO: Make configurable
+        config_loader = ConfigLoader()
+        timezone = config_loader.get_timezone()
 
         # Convert Firestore timestamps to datetime
         def to_datetime(value) -> Optional[datetime]:

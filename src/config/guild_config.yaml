@@ -1,62 +1,76 @@
 # src/config/guild_config.yaml
 
+# Application settings
+app:
+  timezone: "America/Vancouver" # Timezone for the bot - change this to your local timezone
+  # Common timezone options:
+  # - "UTC" (Universal time)
+  # - "America/New_York" (Eastern time)
+  # - "America/Chicago" (Central time)
+  # - "America/Denver" (Mountain time)
+  # - "America/Los_Angeles" (Pacific time)
+  # - "America/Vancouver" (Pacific time, Canada)
+  # - "Europe/London" (GMT/BST)
+  # - "Europe/Paris" (CET/CEST)
+  # - "Asia/Tokyo" (JST)
+  # - "Australia/Sydney" (AEST/AEDT)
+
 roles:
   # Skill Level Roles with emoji prefixes from constants.py
   beginner:
     name: "🌱 Beginner"
-    color: 0x4CAF50    # Green
+    color: 0x4CAF50 # Green
     position: 7
   adv_beginner:
     name: "🎾 Advanced Beginner"
-    color: 0x8BC34A    # Light Green
+    color: 0x8BC34A # Light Green
     position: 6
   intermediate:
     name: "🎯 Intermediate"
-    color: 0x2196F3    # Blue
+    color: 0x2196F3 # Blue
     position: 5
   adv_intermediate:
     name: "⭐ Advanced Intermediate"
-    color: 0x9C27B0    # Purple
+    color: 0x9C27B0 # Purple
     position: 4
   advanced:
     name: "🏆 Advanced"
-    color: 0xF44336    # Red
+    color: 0xF44336 # Red
     position: 3
-  
+
   member:
     name: "Club Member"
-    color: 0x2ecc71    # Green
+    color: 0x2ecc71 # Green
     position: 1
   visitor:
     name: "Court Visitor"
-    color: 0x95a5a6    # Light gray
-    position: 0        # Lowest position
-
+    color: 0x95a5a6 # Light gray
+    position: 0 # Lowest position
 
 channels:
   court_side:
     name: "court-side"
     category: "General"
     topic: "Private tennis bot interactions"
-    access_roles: ["Club Member"]  # Only Club Members can see this
+    access_roles: ["Club Member"] # Only Club Members can see this
 
   welcome:
     name: "welcome"
     category: "Information"
     topic: "Welcome to the tennis community! Please introduce yourself."
-    access_roles: ["Court Visitor", "Club Member"]  # Both roles can see this
+    access_roles: ["Court Visitor", "Club Member"] # Both roles can see this
 
   hotspots:
     name: "hotspots"
     category: "Information"
     topic: "See where the tennis action is happening - real-time player availability dashboard"
-    access_roles: ["Court Visitor", "Club Member"]  # Both roles can see this
+    access_roles: ["Court Visitor", "Club Member"] # Both roles can see this
 
   admin:
     name: "bot-admin"
     category: "Admin Only"
     topic: "Admin commands and bot management"
-    access_roles: []  # Empty means admin-only
+    access_roles: [] # Empty means admin-only
 
 command_permissions:
   visitor:
@@ -70,8 +84,6 @@ command_permissions:
       - update-profile
     description: "Profile management commands"
 
-
-
 messages:
   welcome:
     title: "Welcome to {guild_name}, {member_name}! 🎾"
@@ -81,7 +93,6 @@ messages:
       To get started, please use the `/get-started` command to set up your profile and tennis skill rating.
 
       If you have any questions, feel free to ask in the community channels!
-
 
 responses:
   errors:

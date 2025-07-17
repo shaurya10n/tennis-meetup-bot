@@ -4,12 +4,14 @@ import nextcord
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
+from zoneinfo import ZoneInfo
 from src.config.dynamodb_config import get_db
 from src.database.dao.dynamodb.schedule_dao import ScheduleDAO
 from src.database.dao.dynamodb.player_dao import PlayerDAO
 from src.database.models.dynamodb.schedule import Schedule
 from src.utils.responses import Responses
 from src.utils.matching_algorithm import TennisMatchingAlgorithm
+from src.utils.config_loader import ConfigLoader
 from .constants import (
     ERRORS,
     SUCCESS,
@@ -45,6 +47,8 @@ class ScheduleCommands:
         self.matching_algorithm = TennisMatchingAlgorithm(
             self.player_dao, self.schedule_dao, self.court_dao, self.match_dao
         )
+        config_loader = ConfigLoader()
+        self.timezone = config_loader.get_timezone()
 
     async def _check_profile_complete(
         self,
