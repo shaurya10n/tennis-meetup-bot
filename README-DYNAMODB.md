@@ -38,7 +38,7 @@ If you want to populate the database with sample data for development:
 
 ```bash
 # Run the seed script
-./scripts/seed_data.py
+python ./scripts/seed_data.py
 ```
 
 ## Interacting with DynamoDB Local
