@@ -1,0 +1,28 @@
+[run]
+source = src
+omit =
+    src/cogs/admin/**
+    src/cogs/user/welcome.py
+    src/cogs/user/views/**
+    src/cogs/user/commands/*/command.py
+    src/cogs/user/commands/*/views.py
+    src/cogs/user/commands/get_started/**
+    src/cogs/user/commands/schedule/command.py
+    src/cogs/user/commands/schedule/views/**
+    src/cogs/user/commands/update_profile/**
+    src/cogs/user/commands/view_profile/**
+    src/cogs/user/commands/matches/**
+    src/cogs/user/commands/find_match/command.py
+    src/cogs/user/commands/find_match/views.py
+    src/database/init_db.py
+    src/database/models/player.py
+    src/database/models/schedule.py
+    src/database/models/court.py
+    src/config/permissions.py
+    src/utils/role_manager.py
+    src/cogs/user/commands/wrapper.py
+
+[report]
+fail_under = 90
+show_missing = true
+precision = 1
