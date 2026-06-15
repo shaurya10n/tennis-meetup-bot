@@ -29,6 +29,13 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+.coverage
+htmlcov/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
 
 # nyc test coverage
 .nyc_output
